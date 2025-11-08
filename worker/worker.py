@@ -93,21 +93,30 @@ def scrape_job(job):
         print(f"An error occurred: {e}")
 
 def main():
-    print("Worker starting...")
-    conn = get_db_connection()
+    print("Worker service started.")
 
-    if not conn:
-        print("Could not connect to DB. Exiting.")
-        return
+    while True:
+        print("\n--- Starting scheduled scrape run ---")
+        conn = get_db_connection()
+        
+        if not conn:
+            print("Could not connect to DB. Sleeping for 1 minute before retrying.")
+            time.sleep(60)
+            continue
 
-    active_jobs = fetch_active_jobs(conn)
-    print(f"Found {len(active_jobs)} active job(s).")
+        active_jobs = fetch_active_jobs(conn)
+        print(f"Found {len(active_jobs)} active job(s).")
 
-    for job in active_jobs:
-        scrape_job(job)
+        for job in active_jobs:
+            scrape_job(job)
 
-    print("\nWorker run finished.")
-    conn.close()
+        conn.close()
+        print("Scrape run finished.")
+        
+        # How long to wait between runs (in seconds).
+        SLEEP_SECONDS = 3600 
+        print(f"Sleeping for {SLEEP_SECONDS / 60} minutes...")
+        time.sleep(SLEEP_SECONDS)
 
 if __name__ == "__main__":
     main()
